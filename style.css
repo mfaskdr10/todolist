@@ -1,0 +1,138 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Open Sans", sans-serif;
+  color: #5e5e5e;
+}
+
+a {
+  text-decoration: none;
+  font-family: "Open Sans", sans-serif;
+}
+
+.container {
+  display: flex;
+}
+
+.sidebar {
+  flex: 1;
+  padding: 40px 30px;
+  background-color: #ededed;
+  min-height: 100vh;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.sidebar .container-sidebar {
+  background-color: white;
+  padding: 30px 25px;
+  height: 100vh;
+  border-radius: 20px;
+}
+
+.container-sidebar .title {
+  margin-bottom: 30px;
+}
+
+.container-sidebar .menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.container-sidebar .menu .link-page {
+  display: inline-flex;
+  gap: 10px;
+  padding: 15px 8px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #3a3a3a;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.container-sidebar .menu .link-page:hover {
+  background-color: #dedede;
+}
+
+.container-sidebar .menu .link-page.category-list {
+  margin-left: 10px;
+}
+
+.container-sidebar .menu .link-page i {
+  font-size: 20px;
+}
+
+.container-sidebar .menu .category {
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+
+.content {
+  flex: 4;
+  padding: 70px 50px;
+}
+
+.content .all-items .group-title {
+  display: flex;
+  /* justify-content: space-between; */
+  align-items: center;
+}
+
+.content .all-items .title {
+  margin-bottom: 20px;
+}
+
+.content .all-items .group {
+  display: flex;
+  gap: 20px;
+}
+
+.content .all-items .group .input-wrap {
+  width: 100%;
+  padding: 20px;
+  border: 1px solid #dedede;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.3s ease-in-out;
+}
+
+.content .all-items .group .input-wrap:focus-within {
+  border: 1.5px solid #4e4e4e;
+}
+
+.content .all-items .group .input-wrap input {
+  border: none;
+  outline: none;
+  font-size: 20px;
+  width: 100%;
+}
+
+.content .all-items .group .input-wrap input::placeholder {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.content .all-items .group .input-wrap i {
+  font-size: 20px;
+}
+
+.content .all-items .group .add-task {
+  padding: 10px 40px;
+  max-width: 150px;
+  width: 100%;
+  background-color: #d8d8d8;
+  color: #010101;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+}
