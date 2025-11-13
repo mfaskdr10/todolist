@@ -147,7 +147,6 @@ a {
   border-top: 2px solid #dedede;
   border-left: 2px solid #dedede;
   border-radius: 10px;
-  height: 1;
 }
 
 .container-card .card {
@@ -168,7 +167,7 @@ a {
   font-weight: bold;
   text-transform: uppercase;
   margin-bottom: 5px;
-  display: inline-block;
+  display: inline-flex;
 }
 
 .title-card {
