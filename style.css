@@ -21,14 +21,14 @@ a {
 .sidebar {
   flex: 1;
   padding: 40px 30px;
-  background-color: #ededed;
+  background-color: white;
   min-height: 100vh;
   border-top-right-radius: 20px;
   border-bottom-right-radius: 20px;
 }
 
 .sidebar .container-sidebar {
-  background-color: white;
+  background-color: #f5f5f5;
   padding: 30px 25px;
   height: 100vh;
   border-radius: 20px;
@@ -56,7 +56,7 @@ a {
 }
 
 .container-sidebar .menu .link-page:hover {
-  background-color: #dedede;
+  background-color: #ebebeb;
 }
 
 .container-sidebar .menu .link-page.category-list {
@@ -76,7 +76,7 @@ a {
 
 .content {
   flex: 4;
-  padding: 70px 50px;
+  padding: 70px 20px;
 }
 
 .content .all-items .group-title {
@@ -135,4 +135,68 @@ a {
   display: flex;
   align-items: center;
   border-radius: 10px;
+}
+
+/* CARD STYLING */
+.container-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 20px;
+  padding: 20px 20px;
+  border-top: 2px solid #dedede;
+  border-left: 2px solid #dedede;
+  border-radius: 10px;
+  height: 1;
+}
+
+.container-card .card {
+  padding: 20px;
+  border-radius: 10px;
+  background-color: #f5f5f5;
+  width: 100%;
+  max-width: 300px;
+  transition: all 0.3s ease-in-out;
+}
+
+.container-card .card .catogory {
+  background-color: rgb(244, 163, 163);
+  border-radius: 20px;
+  padding: 5px 15px;
+  color: #3a3a3a;
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  display: inline-block;
+}
+
+.title-card {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.deadline {
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.countdown {
+  margin-bottom: 10px;
+}
+
+.countdown .countdown-time {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.btn-done-task {
+  padding: 5px 20px;
+  width: 100%;
+  background-color: #d8d8d8;
+  color: #010101;
+  font-size: 16px;
+  border-radius: 10px;
+  cursor: pointer;
 }
