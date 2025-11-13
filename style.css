@@ -143,9 +143,8 @@ a {
   flex-wrap: wrap;
   gap: 20px;
   margin-top: 20px;
-  padding: 20px 20px;
+  padding-top: 20px;
   border-top: 2px solid #dedede;
-  border-left: 2px solid #dedede;
   border-radius: 10px;
 }
 
@@ -155,7 +154,6 @@ a {
   background-color: #f5f5f5;
   width: 100%;
   max-width: 300px;
-  transition: all 0.3s ease-in-out;
 }
 
 .container-card .card .catogory {
@@ -167,7 +165,7 @@ a {
   font-weight: bold;
   text-transform: uppercase;
   margin-bottom: 5px;
-  display: inline-flex;
+  width: fit-content;
 }
 
 .title-card {
