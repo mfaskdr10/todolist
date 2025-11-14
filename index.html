@@ -29,7 +29,7 @@
     />
   </head>
   <body>
-    <div class="container">
+    <div class="container-all">
       <aside class="sidebar">
         <div class="container-sidebar">
           <h2 class="title">Menu</h2>
@@ -37,7 +37,7 @@
           <div class="menu">
             <a href="/all" class="link-page">
               <i class="fa-solid fa-border-all"></i>
-              All Task
+              Semua Tugas
             </a>
 
             <p class="category">Category Task</p>
@@ -64,7 +64,7 @@
 
       <main class="content">
         <div class="all-items" id="all-items">
-          <h1 class="title">All Task</h1>
+          <h1 class="title">Semua Tugas</h1>
 
           <div class="group">
             <div class="input-wrap">
@@ -77,13 +77,47 @@
               />
             </div>
 
-            <div class="add-task">Add Task</div>
+            <button
+              type="button"
+              class="add-task"
+              data-bs-toggle="modal"
+              data-bs-target="#task-modal"
+            >
+              <i class="fa-solid fa-plus"></i> Add Task
+            </button>
           </div>
 
           <!-- CARD -->
           <div class="container-card">
-            <div class="card">
-              <span class="catogory">Penting</span>
+            <div class="card red">
+              <span class="category red">Penting</span>
+              <h3 class="title-card">Name Task</h3>
+              <p class="deadline">Deadline: 12 Nov 2025</p>
+              <div class="countdown">
+                <span class="countdown-time"> 21 H, 3 J, 20 M, 39 D </span>
+              </div>
+              <button class="btn-done-task">Tandai Selesai</button>
+            </div>
+            <div class="card amber">
+              <span class="category amber">Cicil Cepat</span>
+              <h3 class="title-card">Name Task</h3>
+              <p class="deadline">Deadline: 12 Nov 2025</p>
+              <div class="countdown">
+                <span class="countdown-time"> 21 H, 3 J, 20 M, 39 D </span>
+              </div>
+              <button class="btn-done-task">Tandai Selesai</button>
+            </div>
+            <div class="card blue">
+              <span class="category blue">Jadwalkan</span>
+              <h3 class="title-card">Name Task</h3>
+              <p class="deadline">Deadline: 12 Nov 2025</p>
+              <div class="countdown">
+                <span class="countdown-time"> 21 H, 3 J, 20 M, 39 D </span>
+              </div>
+              <button class="btn-done-task">Tandai Selesai</button>
+            </div>
+            <div class="card gray">
+              <span class="category gray">Santai</span>
               <h3 class="title-card">Name Task</h3>
               <p class="deadline">Deadline: 12 Nov 2025</p>
               <div class="countdown">
@@ -94,6 +128,68 @@
           </div>
         </div>
       </main>
+    </div>
+
+    <!-- MODAL -->
+    <div
+      class="modal fade"
+      id="task-modal"
+      tabindex="-1"
+      aria-labelledby="exampleModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title" id="taskModalLabel">Tambah Tugas Baru</h2>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <!-- Formulir Input Sederhana -->
+            <form id="task-form" class="form-wrapper">
+              <div class="form-group">
+                <label for="task-name">Nama Tugas</label>
+                <input
+                  type="text"
+                  id="task-name"
+                  placeholder="Misal: Buat laporan proyek..."
+                  required
+                  class="form-control"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="task-deadline">Deadline</label>
+                <input
+                  type="date"
+                  id="task-deadline"
+                  required
+                  class="form-control"
+                />
+              </div>
+
+              <p id="error-message" class="error-message">
+                Harap isi semua kolom.
+              </p>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+            <button type="button" class="btn btn-primary">Save changes</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- bootstrap -->
