@@ -36,33 +36,46 @@ const taskNameInput = document.getElementById("task-name");
 const taskDeadlineInput = document.getElementById("task-deadline");
 const errorMessage = document.getElementById("error-message");
 const taskBoard = document.getElementById("task-board");
-
-// --- FIX 1: Selektor mainTitle diperbaiki ---
-// Menggunakan querySelector untuk mencocokkan class dari HTML
 const mainTitle = document.querySelector("#view-semua-tugas .title");
-
-// Referensi Filter
 const filterButtons = document.querySelectorAll(".filter-btn");
+const searchInput = document.getElementById("search");
+
+// --- Referensi untuk Fitur Baru ---
+const viewToggleContainer = document.getElementById("view-toggle");
+const viewDonePage = document.getElementById("view-done-page");
+const mainTaskView = document.getElementById("view-semua-tugas"); // Header
+
+// --- BARU: Referensi Statistik (Fitur 2) ---
+const statToday = document.getElementById("stat-today");
+const statWeek = document.getElementById("stat-week");
+const completedTaskList = document.getElementById("completed-task-list");
+const chartCanvas = document.getElementById("productivity-chart");
+let productivityChart; // Variabel untuk instance Chart
 
 // Referensi Modal (Versi Bootstrap)
 const taskModalElement = document.getElementById("task-modal");
-let taskModal; // Variabel untuk instance modal
-
-// --- FIX 2: Selektor showModalButton diperbaiki ---
-// Menggunakan querySelector untuk mencocokkan class .add-task dari HTML
+let taskModal;
 const showModalButton = document.querySelector(".add-task");
+
+// Modal Konfirmasi
+const confirmDoneModalElement = document.getElementById("confirm-done-modal");
+const btnConfirmDone = document.getElementById("btn-confirm-done");
+const confirmTaskName = document.getElementById("confirm-task-name");
+let taskToCompleteId = null;
+let confirmDoneModal;
 
 // 💾 5. Penyimpanan Lokal (localStorage)
 let tasks = JSON.parse(localStorage.getItem("smartTasks")) || [];
+let completedTasks =
+  JSON.parse(localStorage.getItem("smartCompletedTasks")) || [];
 
 // State Aplikasi
-let currentFilter = "all";
+let currentFilter = localStorage.getItem("smartTasksFilter") || "all";
 let countdownInterval;
 
 /**
  * Menganalisis urgensi berdasarkan deadline.
- * @param {string} deadline - String tanggal (YYYY-MM-DD).
- * @returns {'mendesak' | 'terjadwal'}
+ * (Fungsi ini tidak berubah)
  */
 function getUrgency(deadline) {
   if (!deadline) return "terjadwal";
@@ -78,8 +91,7 @@ function getUrgency(deadline) {
 
 /**
  * Menganalisis beban kerja berdasarkan nama tugas.
- * @param {string} taskName - Nama tugas.
- * @returns {'berat' | 'ringan'}
+ * (Fungsi ini tidak berubah)
  */
 function getWorkload(taskName) {
   const lowerName = taskName.toLowerCase();
@@ -92,9 +104,7 @@ function getWorkload(taskName) {
 
 /**
  * Mendapatkan ID kuadran yang benar berdasarkan urgensi dan beban.
- * @param {string} urgency - 'mendesak' atau 'terjadwal'.
- * @param {string} workload - 'berat' atau 'ringan'.
- * @returns {string} - Kunci kuadran ('api', 'cepat', 'jadwal', 'santai').
+ * (Fungsi ini tidak berubah)
  */
 function getQuadrantKey(urgency, workload) {
   if (urgency === "mendesak" && workload === "berat") return "api";
@@ -106,8 +116,7 @@ function getQuadrantKey(urgency, workload) {
 
 /**
  * Mendapatkan prioritas numerik untuk sorting.
- * @param {string} quadrantKey - Kunci kuadrad.
- * @returns {number} - 1 (Penting) s/d 4 (Santai).
+ * (Fungsi ini tidak berubah)
  */
 function getTaskPriority(quadrantKey) {
   switch (quadrantKey) {
@@ -132,16 +141,19 @@ function saveTasks() {
 }
 
 /**
- * --- FIX 3: Fungsi renderTask ditulis ulang ---
- * Merender satu kartu tugas ke DOM.
- * Menggunakan struktur HTML dari template komentar Anda (misal, <div class="card red">).
- * @param {object} task - Objek tugas.
+ * Fungsi simpan tugas selesai
+ */
+function saveCompletedTasks() {
+  localStorage.setItem("smartCompletedTasks", JSON.stringify(completedTasks));
+}
+
+/**
+ * Render Task
+ * (Fungsi ini tidak berubah)
  */
 function renderTask(task) {
-  // Tentukan warna dan nama kategori
   let cardColorClass = "";
   let categoryName = "";
-
   switch (task.quadrantKey) {
     case "api":
       cardColorClass = "red";
@@ -163,13 +175,12 @@ function renderTask(task) {
       cardColorClass = "gray";
       categoryName = "Lainnya";
   }
-
   const taskCard = document.createElement("div");
-  taskCard.className = `card ${cardColorClass}`; // Sesuai template: <div class="card red">
+  taskCard.className = `card ${cardColorClass}`;
   taskCard.dataset.id = task.id;
   taskCard.dataset.deadline = task.deadline;
+  taskCard.dataset.name = task.name; // Simpan nama untuk modal konfirmasi
 
-  // Format tanggal (misal: 15 Nov 2025)
   const deadlineDate = new Date(task.deadline + "T00:00:00");
   const formattedDeadline = deadlineDate.toLocaleString("id-ID", {
     day: "2-digit",
@@ -177,7 +188,6 @@ function renderTask(task) {
     year: "numeric",
   });
 
-  // Atur innerHTML agar sesuai dengan struktur template Anda
   taskCard.innerHTML = `
         <span class="category ${cardColorClass}">${categoryName}</span>
         <h3 class="title-card">${task.name}</h3>
@@ -185,48 +195,237 @@ function renderTask(task) {
         <div class="countdown" data-countdown-id="${task.id}">
             <span class="countdown-time">Menghitung...</span>
         </div>
-        <button class="btn-done-task">Tandai Selesai</button>
+        <button class="btn-done-task">Done</button>
     `;
   taskBoard.appendChild(taskCard);
 }
 
 /**
- * Merender semua tugas berdasarkan filter dan sort.
+ * --- MODIFIKASI: Fungsi renderAllTasks ---
+ * Sekarang memanggil renderDonePage() saat filter "done" aktif.
  */
 function renderAllTasks() {
-  // Kosongkan papan
-  taskBoard.innerHTML = "";
+  updateTaskCountBadges();
 
+  if (currentFilter === "done") {
+    viewDonePage.style.display = "block";
+    taskBoard.style.display = "none";
+    mainTaskView.style.display = "none";
+    // --- BARU: Panggil fungsi render statistik ---
+    renderDonePage();
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+    return;
+  }
+
+  viewDonePage.style.display = "none";
+  mainTaskView.style.display = "block";
+  if (taskBoard.classList.contains("list-view")) {
+    taskBoard.style.display = "flex";
+  } else {
+    taskBoard.style.display = "grid";
+  }
+
+  taskBoard.innerHTML = "";
+  const searchTerm = searchInput.value.toLowerCase();
   let tasksToRender = [];
 
-  // 1. Filter
   if (currentFilter === "all") {
     tasksToRender = [...tasks];
   } else {
     tasksToRender = tasks.filter((task) => task.quadrantKey === currentFilter);
   }
 
-  // 2. Sort (Hanya jika 'Semua Tugas')
+  if (searchTerm) {
+    tasksToRender = tasksToRender.filter((task) =>
+      task.name.toLowerCase().includes(searchTerm)
+    );
+  }
+
   if (currentFilter === "all") {
     tasksToRender.sort(
       (a, b) => getTaskPriority(a.quadrantKey) - getTaskPriority(b.quadrantKey)
     );
   }
 
-  // 3. Render
   tasksToRender.forEach(renderTask);
-
-  // (Re)start interval countdown
   startCountdownTimers();
+}
+
+// --- BARU: Fungsi untuk merender Halaman Selesai (Fitur 2) ---
+function renderDonePage() {
+  // 1. Hitung Statistik dan dapatkan data
+  const stats = calculateStats();
+
+  // 2. Update Mini-Stats
+  statToday.textContent = stats.countToday;
+  statWeek.textContent = stats.countWeek;
+
+  // 3. Render Chart
+  renderStatsChart(stats.chartLabels, stats.chartData);
+
+  // 4. Render Daftar Tugas Selesai
+  completedTaskList.innerHTML = ""; // Kosongkan daftar
+  if (completedTasks.length === 0) {
+    completedTaskList.innerHTML =
+      '<p class="history-item">Belum ada tugas yang selesai.</p>'; // Gunakan kelas kustom
+    return;
+  }
+
+  // Sortir agar yang terbaru di atas
+  const sortedCompleted = [...completedTasks].sort(
+    (a, b) => new Date(b.completedAt) - new Date(a.completedAt)
+  );
+
+  sortedCompleted.forEach((task) => {
+    const item = document.createElement("div");
+    // ** MODIFIKASI: Gunakan kelas .history-item **
+    item.className = "history-item";
+    const completedDate = new Date(task.completedAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+    // Kategori disesuaikan dengan nama yang ada
+    let categoryName = task.quadrantKey;
+    switch (task.quadrantKey) {
+      case "api":
+        categoryName = "🔥 Penting";
+        break;
+      case "cepat":
+        categoryName = "✅ Cicil Cepat";
+        break;
+      case "jadwal":
+        categoryName = "🗓️ Jadwalkan";
+        break;
+      case "santai":
+        categoryName = "☕ Santai";
+        break;
+    }
+
+    // ** MODIFIKASI: Gunakan struktur HTML kustom **
+    item.innerHTML = `
+      <div class="history-item-header">
+        <h5>${task.name}</h5>
+        <small>${completedDate}</small>
+      </div>
+      <small class="history-item-category">Kategori: ${categoryName}</small>
+    `;
+    completedTaskList.appendChild(item);
+  });
+}
+
+// --- BARU: Fungsi menghitung statistik (Fitur 2) ---
+function calculateStats() {
+  const now = new Date();
+  const todayStart = new Date(now.setHours(0, 0, 0, 0));
+
+  // Dapatkan hari Minggu sebagai awal minggu
+  const dayOfWeek = todayStart.getDay(); // 0 = Minggu, 1 = Senin
+  const weekStart = new Date(
+    todayStart.getTime() - dayOfWeek * 24 * 60 * 60 * 1000
+  );
+
+  let countToday = 0;
+  let countWeek = 0;
+
+  // Persiapan data untuk 7 hari terakhir
+  const last7DaysData = [0, 0, 0, 0, 0, 0, 0]; // Index 6 adalah hari ini
+  const last7DaysLabels = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(todayStart.getTime() - i * 24 * 60 * 60 * 1000);
+    // Label 'Hari Ini' untuk hari terakhir
+    last7DaysLabels.push(
+      i === 0 ? "Hari Ini" : d.toLocaleDateString("id-ID", { weekday: "short" })
+    );
+  }
+
+  completedTasks.forEach((task) => {
+    const completedAt = new Date(task.completedAt);
+
+    // Hitung Hari Ini
+    if (completedAt >= todayStart) {
+      countToday++;
+    }
+    // Hitung Minggu Ini
+    if (completedAt >= weekStart) {
+      countWeek++;
+    }
+
+    // Hitung untuk chart 7 hari
+    const completedDateOnly = new Date(
+      new Date(task.completedAt).setHours(0, 0, 0, 0)
+    );
+    const diffDays = Math.floor(
+      (todayStart - completedDateOnly) / (1000 * 60 * 60 * 24)
+    );
+
+    if (diffDays >= 0 && diffDays < 7) {
+      last7DaysData[6 - diffDays]++; // 6 - 0 = index 6 (hari ini)
+    }
+  });
+
+  return {
+    countToday: countToday,
+    countWeek: countWeek,
+    chartLabels: last7DaysLabels,
+    chartData: last7DaysData,
+  };
+}
+
+// --- BARU: Fungsi render chart (Fitur 2) ---
+function renderStatsChart(labels, data) {
+  if (productivityChart) {
+    productivityChart.destroy(); // Hancurkan chart lama jika ada
+  }
+
+  // Pastikan kita punya konteks canvas
+  const ctx = chartCanvas.getContext("2d");
+  if (!ctx) return;
+
+  productivityChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: labels, // Label 7 hari
+      datasets: [
+        {
+          label: "Tugas Selesai",
+          data: data, // Data 7 hari
+          backgroundColor: "rgba(55, 48, 163, 0.7)", // Warna ungu (#3730a3)
+          borderColor: "rgba(55, 48, 163, 1)",
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1, // Pastikan sumbu Y adalah bilangan bulat
+          },
+        },
+      },
+      plugins: {
+        legend: {
+          display: false, // Sembunyikan legenda
+        },
+      },
+      responsive: true,
+      maintainAspectRatio: false, // Penting agar chart mengisi div
+    },
+  });
 }
 
 /**
  * Menghandle submit form tambah tugas.
- * @param {Event} e - Event submit.
+ * (Fungsi ini tidak berubah)
  */
 function handleAddTask(e) {
   e.preventDefault();
-
   const name = taskNameInput.value.trim();
   const deadline = taskDeadlineInput.value;
 
@@ -236,7 +435,6 @@ function handleAddTask(e) {
   }
   errorMessage.style.display = "none";
 
-  // 🧠 Otak Aplikasi bekerja di sini
   const urgency = getUrgency(deadline);
   const workload = getWorkload(name);
   const quadrantKey = getQuadrantKey(urgency, workload);
@@ -247,56 +445,52 @@ function handleAddTask(e) {
     deadline: deadline,
     urgency: urgency,
     workload: workload,
-    quadrantKey: quadrantKey, // Simpan kunci kuadran
+    quadrantKey: quadrantKey,
   };
 
   tasks.push(newTask);
   saveTasks();
-  renderAllTasks(); // Render ulang semua untuk sorting dan filtering
+  renderAllTasks();
 
   taskForm.reset();
-  taskModal.hide(); // Sembunyikan modal Bootstrap
+  taskModal.hide();
 }
 
 /**
- * --- FIX 4: Selektor tombol delete diperbaiki ---
- * Menghandle klik pada tombol 'Selesai' (DENGAN KONFIRMASI)
- * @param {Event} e - Event klik.
+ * Memulai proses 'Selesai' (Fitur 1)
+ * (Fungsi ini tidak berubah)
  */
-function handleDeleteTask(e) {
-  // Diubah ke .btn-done-task agar sesuai renderTask baru
+function initiateCompleteTask(e) {
   if (e.target.classList.contains("btn-done-task")) {
-    const taskCard = e.target.closest(".task-card"); // .task-card tidak ada, harusnya .card
-    const realTaskCard = e.target.closest(".card"); // Perbaikan: cari .card
-    if (!realTaskCard) return;
+    const taskCard = e.target.closest(".card");
+    if (!taskCard) return;
 
-    // --- TAMBAHAN KONFIRMASI ---
-    const taskName = realTaskCard.querySelector(".title-card").textContent;
-    if (!confirm(`Yakin ingin menyelesaikan tugas:\n"${taskName}"?`)) {
-      return; // Batalkan jika pengguna klik 'Cancel'
-    }
-    // --- SELESAI ---
-
-    const taskId = realTaskCard.dataset.id;
-    tasks = tasks.filter((task) => task.id !== taskId);
-
-    realTaskCard.style.transition = "opacity 0.3s, transform 0.3s";
-    realTaskCard.style.opacity = "0";
-    realTaskCard.style.transform = "scale(0.9)";
-
-    setTimeout(() => {
-      realTaskCard.remove();
-      saveTasks();
-    }, 300);
+    taskToCompleteId = taskCard.dataset.id;
+    confirmTaskName.textContent = taskCard.dataset.name;
+    confirmDoneModal.show();
   }
 }
 
-// --- ⭐ 4. Fitur Countdown Timer Dinamis ---
-
 /**
- * --- FIX 5: Countdown string diperbaiki ---
- * Menghapus kelas Tailwind dan menggunakan inline style untuk warna.
+ * Konfirmasi 'Selesai' (Fitur 1)
+ * (Fungsi ini tidak berubah)
  */
+function confirmCompleteTask() {
+  if (!taskToCompleteId) return;
+  const taskIndex = tasks.findIndex((task) => task.id === taskToCompleteId);
+  if (taskIndex === -1) return;
+  const [completedTask] = tasks.splice(taskIndex, 1);
+  completedTask.completedAt = new Date().toISOString();
+  completedTasks.push(completedTask);
+  saveTasks();
+  saveCompletedTasks();
+  renderAllTasks();
+  confirmDoneModal.hide();
+  taskToCompleteId = null;
+}
+
+// --- ⭐ 4. Fitur Countdown Timer Dinamis ---
+// (Tidak ada perubahan di semua fungsi countdown)
 function getCountdownString(deadline) {
   const dl = new Date(deadline + "T23:59:59");
   const now = new Date();
@@ -311,31 +505,27 @@ function getCountdownString(deadline) {
   const minutes = Math.floor(totalSeconds / 60) % 60;
   const seconds = Math.floor(totalSeconds) % 60;
 
-  // Ganti warna menggunakan inline style
-  let color = "green"; // Default
+  let color = "green";
   if (days < 1) color = "red";
-  else if (days <= urgentThresholdDays) color = "orange"; // 'orange' lebih umum daripada 'yellow-700'
+  else if (days <= urgentThresholdDays) color = "orange";
 
   return `<span class="countdown-time" style="color: ${color};">
         ${days} H, ${hours} J, ${minutes} M, ${seconds} D
     </span>`;
 }
-
 function updateAllCountdowns() {
   const countdownElements = document.querySelectorAll(".countdown");
   if (countdownElements.length === 0 && countdownInterval) {
     clearInterval(countdownInterval);
     countdownInterval = null;
   }
-
   countdownElements.forEach((el) => {
-    const card = el.closest(".card"); // Diubah dari .task-card ke .card
+    const card = el.closest(".card");
     if (card && card.dataset.deadline) {
       el.innerHTML = getCountdownString(card.dataset.deadline);
     }
   });
 }
-
 function startCountdownTimers() {
   if (countdownInterval) {
     clearInterval(countdownInterval);
@@ -343,77 +533,137 @@ function startCountdownTimers() {
   updateAllCountdowns();
   countdownInterval = setInterval(updateAllCountdowns, 1000);
 }
+// --- (Selesai Fungsi Countdown) ---
 
 // --- Handler untuk Modal (Versi Bootstrap) ---
+// (Tidak ada perubahan)
 function showModal() {
   errorMessage.style.display = "none";
   taskForm.reset();
   taskModal.show();
 }
-
 function resetModal() {
-  // Fungsi ini dipanggil saat modal ditutup
   errorMessage.style.display = "none";
   taskForm.reset();
 }
 
-// --- Handler untuk Filter ---
+// --- Fungsi update hitungan badge (Fitur 3) ---
+// (Fungsi ini tidak berubah)
+function updateTaskCountBadges() {
+  document.getElementById("count-all").textContent = tasks.length;
+  document.getElementById("count-api").textContent = tasks.filter(
+    (t) => t.quadrantKey === "api"
+  ).length;
+  document.getElementById("count-cepat").textContent = tasks.filter(
+    (t) => t.quadrantKey === "cepat"
+  ).length;
+  document.getElementById("count-jadwal").textContent = tasks.filter(
+    (t) => t.quadrantKey === "jadwal"
+  ).length;
+  document.getElementById("count-santai").textContent = tasks.filter(
+    (t) => t.quadrantKey === "santai"
+  ).length;
+  document.getElementById("count-done").textContent = completedTasks.length;
+}
+
+/**
+ * Handler untuk Filter
+ * (Fungsi ini tidak berubah)
+ */
 function handleFilterClick(e) {
   const clickedButton = e.target.closest(".filter-btn");
   if (!clickedButton) return;
 
-  // Update state
   currentFilter = clickedButton.dataset.filter;
+  localStorage.setItem("smartTasksFilter", currentFilter);
 
-  // Update UI Tombol
   document.querySelectorAll("#filter-container .filter-btn").forEach((btn) => {
     btn.classList.remove("active");
   });
   clickedButton.classList.add("active");
 
-  // Update Judul (Sekarang akan berhasil karena mainTitle sudah benar)
-  if (mainTitle) {
-    mainTitle.textContent = clickedButton.textContent.trim();
+  if (currentFilter !== "done" && mainTitle) {
+    mainTitle.textContent = clickedButton.textContent
+      .trim()
+      .replace(/\d+$/, "")
+      .trim();
   }
 
-  // Render ulang
   renderAllTasks();
 }
 
-// --- Inisialisasi Aplikasi ---
+/**
+ * Handler untuk View Toggle (Fitur 1)
+ * (Fungsi ini tidak berubah)
+ */
+function handleViewToggle(e) {
+  const clickedButton = e.target.closest(".view");
+  if (!clickedButton) return;
 
+  const view = clickedButton.dataset.view; // "card" or "list"
+
+  document
+    .querySelectorAll("#view-toggle .view")
+    .forEach((btn) => btn.classList.remove("active"));
+  clickedButton.classList.add("active");
+
+  if (view === "list") {
+    taskBoard.classList.add("list-view");
+    taskBoard.style.display = "flex";
+  } else {
+    taskBoard.classList.remove("list-view");
+    taskBoard.style.display = "grid";
+  }
+}
+
+// --- Inisialisasi Aplikasi ---
 document.addEventListener("DOMContentLoaded", () => {
   // Inisialisasi Modal Bootstrap
   taskModal = new bootstrap.Modal(taskModalElement);
+  confirmDoneModal = new bootstrap.Modal(confirmDoneModalElement);
 
   // Set input tanggal minimal hari ini
   taskDeadlineInput.min = new Date().toISOString().split("T")[0];
+
+  // Atur UI filter agar sesuai dengan state yang dimuat
+  document.querySelectorAll("#filter-container .filter-btn").forEach((btn) => {
+    btn.classList.remove("active");
+  });
+  const activeButton = document.querySelector(
+    `#filter-container .filter-btn[data-filter="${currentFilter}"]`
+  );
+  if (activeButton) {
+    activeButton.classList.add("active");
+    if (currentFilter !== "done" && mainTitle) {
+      mainTitle.textContent = activeButton.textContent
+        .trim()
+        .replace(/\d+$/, "")
+        .trim();
+    }
+  }
 
   // Render tugas awal
   renderAllTasks();
 
   // --- Tambahkan semua Event Listener ---
-
-  // Listener Form
   taskForm.addEventListener("submit", handleAddTask);
+  taskBoard.addEventListener("click", initiateCompleteTask);
+  btnConfirmDone.addEventListener("click", confirmCompleteTask);
 
-  // Listener Tombol Hapus (Delegation)
-  taskBoard.addEventListener("click", handleDeleteTask);
-
-  // Listener Modal (Sekarang akan berhasil karena showModalButton sudah benar)
   if (showModalButton) {
     showModalButton.addEventListener("click", showModal);
   } else {
     console.error("Tombol .add-task tidak ditemukan!");
   }
 
-  // Listener saat modal ditutup (untuk reset form)
   taskModalElement.addEventListener("hidden.bs.modal", (event) => {
-    resetModal(); // Panggil fungsi reset kita
+    resetModal();
   });
 
-  // Listener Filter
   document
     .getElementById("filter-container")
     .addEventListener("click", handleFilterClick);
+
+  searchInput.addEventListener("input", renderAllTasks);
+  viewToggleContainer.addEventListener("click", handleViewToggle);
 });

@@ -4,16 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TODOLIST</title>
-    <!-- CSS -->
     <link rel="stylesheet" href="style.css" />
-    <!-- FONT -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
       rel="stylesheet"
     />
-    <!-- ICON -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
@@ -21,7 +18,12 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-    <!-- BOOTSTRAP -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD"
+      crossorigin="anonymous"
+    />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css
@@ -36,35 +38,52 @@
 
           <div class="menu" id="filter-container">
             <button href="#" class="filter-btn active" data-filter="all">
-              <i class="fa-solid fa-border-all"></i>
-              Semua Tugas
+              <span>
+                <i class="fa-solid fa-border-all"></i>
+                Semua Tugas
+              </span>
+              <span class="badge-count" id="count-all">0</span>
             </button>
 
             <p class="category">Category Task</p>
 
             <button href="#" class="filter-btn category-list" data-filter="api">
-              🔥 Penting
+              <span> 🔥 Penting </span>
+              <span class="badge-count" id="count-api">0</span>
             </button>
             <button
               href="#"
               class="filter-btn category-list"
               data-filter="cepat"
             >
-              ✅ Cicil Cepat
+              <span> ✅ Cicil Cepat </span>
+              <span class="badge-count" id="count-cepat">0</span>
             </button>
             <button
               href="#"
               class="filter-btn category-list"
               data-filter="jadwal"
             >
-              🗓️ Jadwalkan
+              <span> 🗓️ Jadwalkan </span>
+              <span class="badge-count" id="count-jadwal">0</span>
             </button>
             <button
               href="#"
               class="filter-btn category-list"
               data-filter="santai"
             >
-              ☕ Santai
+              <span> ☕ Santai </span>
+              <span class="badge-count" id="count-santai">0</span>
+            </button>
+
+            <p class="category">Arsip</p>
+            <button
+              href="#"
+              class="filter-btn category-list"
+              data-filter="done"
+            >
+              <span> 🏁 Selesai </span>
+              <span class="badge-count" id="count-done">0</span>
             </button>
           </div>
         </div>
@@ -76,7 +95,7 @@
           id="view-semua-tugas"
           style="display: block"
         >
-          <h1 class="title">Semua Tugas</h1>
+          <h1 class="title" id="main-title">Semua Tugas</h1>
 
           <div class="group">
             <div class="input-wrap">
@@ -87,6 +106,19 @@
                 id="search"
                 placeholder="search..."
               />
+            </div>
+
+            <div class="view-container" id="view-toggle">
+              <div class="btn-view">
+                <button class="view active" data-view="card">
+                  <i class="bi bi-grid"></i>
+                </button>
+              </div>
+              <div class="btn-view">
+                <button class="view" data-view="list">
+                  <i class="bi bi-view-stacked"></i>
+                </button>
+              </div>
             </div>
 
             <button
@@ -100,58 +132,40 @@
           </div>
         </header>
 
-        <!-- CARD -->
         <div class="task-board" id="task-board">
-          <!-- <div class="card red">
-              <span class="category red">Penting</span>
-              <h3 class="title-card">Name Task</h3>
-              <p class="deadline">Deadline: 12 Nov 2025</p>
-              <div class="countdown">
-                <span class="countdown-time"> 21 H, 3 J, 20 M, 39 D </span>
-              </div>
-              <button class="btn-done-task">Tandai Selesai</button>
+          </div>
+
+        <div id="view-done-page" style="display: none">
+          <h1 class="title" id="done-title">Statistik Produktivitas</h1>
+          <p>Lihat produktivitas Anda dan tugas yang telah diselesaikan.</p>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h5>Produktivitas Harian</h5>
+              <h3 id="stat-today">0</h3>
+              <p>Tugas selesai hari ini</p>
             </div>
-            <div class="card amber">
-              <span class="category amber">Cicil Cepat</span>
-              <h3 class="title-card">Name Task</h3>
-              <p class="deadline">Deadline: 12 Nov 2025</p>
-              <div class="countdown">
-                <span class="countdown-time"> 21 H, 3 J, 20 M, 39 D </span>
-              </div>
-              <button class="btn-done-task">Tandai Selesai</button>
+            <div class="stat-card">
+              <h5>Produktivitas Mingguan</h5>
+              <h3 id="stat-week">0</h3>
+              <p>Tugas selesai minggu ini</g>
             </div>
-            <div class="card blue">
-              <span class="category blue">Jadwalkan</span>
-              <h3 class="title-card">Name Task</h3>
-              <p class="deadline">Deadline: 12 Nov 2025</p>
-              <div class="countdown">
-                <span class="countdown-time"> 21 H, 3 J, 20 M, 39 D </span>
-              </div>
-              <button class="btn-done-task">Tandai Selesai</button>
+          </div>
+
+          <div class="chart-container">
+            <h5>Aktivitas 7 Hari Terakhir</h5>
+            <div class="chart-wrapper">
+              <canvas id="productivity-chart"></canvas>
             </div>
-            <div class="card gray">
-              <span class="category gray">Santai</span>
-              <h3 class="title-card">Name Task</h3>
-              <p class="deadline">Deadline: 12 Nov 2025</p>
-              <div class="countdown">
-                <span class="countdown-time"> 21 H, 3 J, 20 M, 39 D </span>
-              </div>
-              <button class="btn-done-task">Tandai Selesai</button>
-            </div>
-            <div class="card gray">
-              <span class="category gray">Santai</span>
-              <h3 class="title-card">Name Task</h3>
-              <p class="deadline">Deadline: 12 Nov 2025</p>
-              <div class="countdown">
-                <span class="countdown-time"> 21 H, 3 J, 20 M, 39 D </span>
-              </div>
-              <button class="btn-done-task">Tandai Selesai</button>
-            </div> -->
+          </div>
+
+          <h4 class="history-title">Riwayat Tugas Selesai</h4>
+          <div id="completed-task-list" class="history-list">
+        </div>
         </div>
       </main>
     </div>
 
-    <!-- MODAL -->
     <div
       class="modal fade"
       id="task-modal"
@@ -220,10 +234,53 @@
       </div>
     </div>
 
-    <!-- bootstrap -->
+    <div
+      class="modal fade"
+      id="confirm-done-modal"
+      tabindex="-1"
+      aria-labelledby="confirmModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmModalLabel">
+              Selesaikan Tugas?
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p>
+              Anda yakin ingin menandai tugas ini sebagai selesai?
+              <br />
+              <strong id="confirm-task-name"></strong>
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Batal
+            </button>
+            <button type="button" class="btn btn-success" id="btn-confirm-done">
+              Ya, Selesaikan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script src="script.js"></script>
   </body>
 </html>
