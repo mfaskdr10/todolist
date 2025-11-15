@@ -45,7 +45,7 @@ const viewToggleContainer = document.getElementById("view-toggle");
 const viewDonePage = document.getElementById("view-done-page");
 const mainTaskView = document.getElementById("view-semua-tugas"); // Header
 
-// --- BARU: Referensi Statistik (Fitur 2) ---
+// --- Referensi Statistik (Fitur 2) ---
 const statToday = document.getElementById("stat-today");
 const statWeek = document.getElementById("stat-week");
 const completedTaskList = document.getElementById("completed-task-list");
@@ -54,6 +54,8 @@ let productivityChart; // Variabel untuk instance Chart
 
 // Referensi Modal (Versi Bootstrap)
 const taskModalElement = document.getElementById("task-modal");
+// --- BARU: Referensi Judul Modal ---
+const modalTitle = document.getElementById("taskModalLabel");
 let taskModal;
 const showModalButton = document.querySelector(".add-task");
 
@@ -71,6 +73,8 @@ let completedTasks =
 
 // State Aplikasi
 let currentFilter = localStorage.getItem("smartTasksFilter") || "all";
+// --- BARU: Variabel State untuk Edit ---
+let currentEditId = null;
 let countdownInterval;
 
 /**
@@ -148,8 +152,8 @@ function saveCompletedTasks() {
 }
 
 /**
- * Render Task
- * (Fungsi ini tidak berubah)
+ * --- MODIFIKASI: Render Task ---
+ * Menambahkan div wrapper .card-buttons dan tombol .btn-edit-task
  */
 function renderTask(task) {
   let cardColorClass = "";
@@ -179,7 +183,7 @@ function renderTask(task) {
   taskCard.className = `card ${cardColorClass}`;
   taskCard.dataset.id = task.id;
   taskCard.dataset.deadline = task.deadline;
-  taskCard.dataset.name = task.name; // Simpan nama untuk modal konfirmasi
+  taskCard.dataset.name = task.name; // Simpan nama untuk modal
 
   const deadlineDate = new Date(task.deadline + "T00:00:00");
   const formattedDeadline = deadlineDate.toLocaleString("id-ID", {
@@ -195,14 +199,19 @@ function renderTask(task) {
         <div class="countdown" data-countdown-id="${task.id}">
             <span class="countdown-time">Menghitung...</span>
         </div>
-        <button class="btn-done-task">Done</button>
+        <div class="card-buttons">
+            <button class="btn-edit-task">
+                <i class="fa-solid fa-pencil"></i> Edit
+            </button>
+            <button class="btn-done-task">Done</button>
+        </div>
     `;
   taskBoard.appendChild(taskCard);
 }
 
 /**
  * --- MODIFIKASI: Fungsi renderAllTasks ---
- * Sekarang memanggil renderDonePage() saat filter "done" aktif.
+ * (Logika tidak berubah, tapi panggilannya ke renderTask sekarang menghasilkan tombol edit)
  */
 function renderAllTasks() {
   updateTaskCountBadges();
@@ -211,7 +220,6 @@ function renderAllTasks() {
     viewDonePage.style.display = "block";
     taskBoard.style.display = "none";
     mainTaskView.style.display = "none";
-    // --- BARU: Panggil fungsi render statistik ---
     renderDonePage();
     if (countdownInterval) {
       clearInterval(countdownInterval);
@@ -254,40 +262,31 @@ function renderAllTasks() {
   startCountdownTimers();
 }
 
-// --- BARU: Fungsi untuk merender Halaman Selesai (Fitur 2) ---
+/**
+ * --- FUNGSI renderDonePage ---
+ * (Tidak berubah)
+ */
 function renderDonePage() {
-  // 1. Hitung Statistik dan dapatkan data
   const stats = calculateStats();
-
-  // 2. Update Mini-Stats
   statToday.textContent = stats.countToday;
   statWeek.textContent = stats.countWeek;
-
-  // 3. Render Chart
   renderStatsChart(stats.chartLabels, stats.chartData);
-
-  // 4. Render Daftar Tugas Selesai
-  completedTaskList.innerHTML = ""; // Kosongkan daftar
+  completedTaskList.innerHTML = "";
   if (completedTasks.length === 0) {
     completedTaskList.innerHTML =
-      '<p class="history-item">Belum ada tugas yang selesai.</p>'; // Gunakan kelas kustom
+      '<p class="history-item">Belum ada tugas yang selesai.</p>';
     return;
   }
-
-  // Sortir agar yang terbaru di atas
   const sortedCompleted = [...completedTasks].sort(
     (a, b) => new Date(b.completedAt) - new Date(a.completedAt)
   );
-
   sortedCompleted.forEach((task) => {
     const item = document.createElement("div");
-    // ** MODIFIKASI: Gunakan kelas .history-item **
     item.className = "history-item";
     const completedDate = new Date(task.completedAt).toLocaleString("id-ID", {
       dateStyle: "medium",
       timeStyle: "short",
     });
-    // Kategori disesuaikan dengan nama yang ada
     let categoryName = task.quadrantKey;
     switch (task.quadrantKey) {
       case "api":
@@ -303,8 +302,6 @@ function renderDonePage() {
         categoryName = "☕ Santai";
         break;
     }
-
-    // ** MODIFIKASI: Gunakan struktur HTML kustom **
     item.innerHTML = `
       <div class="history-item-header">
         <h5>${task.name}</h5>
@@ -316,57 +313,45 @@ function renderDonePage() {
   });
 }
 
-// --- BARU: Fungsi menghitung statistik (Fitur 2) ---
+/**
+ * --- FUNGSI calculateStats ---
+ * (Tidak berubah)
+ */
 function calculateStats() {
   const now = new Date();
   const todayStart = new Date(now.setHours(0, 0, 0, 0));
-
-  // Dapatkan hari Minggu sebagai awal minggu
-  const dayOfWeek = todayStart.getDay(); // 0 = Minggu, 1 = Senin
+  const dayOfWeek = todayStart.getDay();
   const weekStart = new Date(
     todayStart.getTime() - dayOfWeek * 24 * 60 * 60 * 1000
   );
-
   let countToday = 0;
   let countWeek = 0;
-
-  // Persiapan data untuk 7 hari terakhir
-  const last7DaysData = [0, 0, 0, 0, 0, 0, 0]; // Index 6 adalah hari ini
+  const last7DaysData = [0, 0, 0, 0, 0, 0, 0];
   const last7DaysLabels = [];
-
   for (let i = 6; i >= 0; i--) {
     const d = new Date(todayStart.getTime() - i * 24 * 60 * 60 * 1000);
-    // Label 'Hari Ini' untuk hari terakhir
     last7DaysLabels.push(
       i === 0 ? "Hari Ini" : d.toLocaleDateString("id-ID", { weekday: "short" })
     );
   }
-
   completedTasks.forEach((task) => {
     const completedAt = new Date(task.completedAt);
-
-    // Hitung Hari Ini
     if (completedAt >= todayStart) {
       countToday++;
     }
-    // Hitung Minggu Ini
     if (completedAt >= weekStart) {
       countWeek++;
     }
-
-    // Hitung untuk chart 7 hari
     const completedDateOnly = new Date(
       new Date(task.completedAt).setHours(0, 0, 0, 0)
     );
     const diffDays = Math.floor(
       (todayStart - completedDateOnly) / (1000 * 60 * 60 * 24)
     );
-
     if (diffDays >= 0 && diffDays < 7) {
-      last7DaysData[6 - diffDays]++; // 6 - 0 = index 6 (hari ini)
+      last7DaysData[6 - diffDays]++;
     }
   });
-
   return {
     countToday: countToday,
     countWeek: countWeek,
@@ -375,25 +360,25 @@ function calculateStats() {
   };
 }
 
-// --- BARU: Fungsi render chart (Fitur 2) ---
+/**
+ * --- FUNGSI renderStatsChart ---
+ * (Tidak berubah)
+ */
 function renderStatsChart(labels, data) {
   if (productivityChart) {
-    productivityChart.destroy(); // Hancurkan chart lama jika ada
+    productivityChart.destroy();
   }
-
-  // Pastikan kita punya konteks canvas
   const ctx = chartCanvas.getContext("2d");
   if (!ctx) return;
-
   productivityChart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: labels, // Label 7 hari
+      labels: labels,
       datasets: [
         {
           label: "Tugas Selesai",
-          data: data, // Data 7 hari
-          backgroundColor: "rgba(55, 48, 163, 0.7)", // Warna ungu (#3730a3)
+          data: data,
+          backgroundColor: "rgba(55, 48, 163, 0.7)",
           borderColor: "rgba(55, 48, 163, 1)",
           borderWidth: 1,
           borderRadius: 4,
@@ -405,24 +390,24 @@ function renderStatsChart(labels, data) {
         y: {
           beginAtZero: true,
           ticks: {
-            stepSize: 1, // Pastikan sumbu Y adalah bilangan bulat
+            stepSize: 1,
           },
         },
       },
       plugins: {
         legend: {
-          display: false, // Sembunyikan legenda
+          display: false,
         },
       },
       responsive: true,
-      maintainAspectRatio: false, // Penting agar chart mengisi div
+      maintainAspectRatio: false,
     },
   });
 }
 
 /**
- * Menghandle submit form tambah tugas.
- * (Fungsi ini tidak berubah)
+ * --- MODIFIKASI: handleAddTask ---
+ * Sekarang menangani "Tambah" dan "Edit"
  */
 function handleAddTask(e) {
   e.preventDefault();
@@ -435,45 +420,57 @@ function handleAddTask(e) {
   }
   errorMessage.style.display = "none";
 
+  // 🧠 Otak Aplikasi bekerja di sini
   const urgency = getUrgency(deadline);
   const workload = getWorkload(name);
   const quadrantKey = getQuadrantKey(urgency, workload);
 
-  const newTask = {
-    id: "task-" + Date.now(),
-    name: name,
-    deadline: deadline,
-    urgency: urgency,
-    workload: workload,
-    quadrantKey: quadrantKey,
-  };
+  if (currentEditId) {
+    // --- LOGIKA EDIT ---
+    const taskToEdit = tasks.find((task) => task.id === currentEditId);
+    if (taskToEdit) {
+      taskToEdit.name = name;
+      taskToEdit.deadline = deadline;
+      taskToEdit.urgency = urgency;
+      taskToEdit.workload = workload;
+      taskToEdit.quadrantKey = quadrantKey;
+    }
+  } else {
+    // --- LOGIKA TAMBAH (yang sudah ada) ---
+    const newTask = {
+      id: "task-" + Date.now(),
+      name: name,
+      deadline: deadline,
+      urgency: urgency,
+      workload: workload,
+      quadrantKey: quadrantKey,
+    };
+    tasks.push(newTask);
+  }
 
-  tasks.push(newTask);
   saveTasks();
   renderAllTasks();
 
   taskForm.reset();
-  taskModal.hide();
+  taskModal.hide(); // resetModal() akan dipanggil oleh event 'hidden.bs.modal'
 }
 
 /**
  * Memulai proses 'Selesai' (Fitur 1)
- * (Fungsi ini tidak berubah)
+ * (Tidak berubah)
  */
 function initiateCompleteTask(e) {
-  if (e.target.classList.contains("btn-done-task")) {
-    const taskCard = e.target.closest(".card");
-    if (!taskCard) return;
+  const taskCard = e.target.closest(".card");
+  if (!taskCard) return;
 
-    taskToCompleteId = taskCard.dataset.id;
-    confirmTaskName.textContent = taskCard.dataset.name;
-    confirmDoneModal.show();
-  }
+  taskToCompleteId = taskCard.dataset.id;
+  confirmTaskName.textContent = taskCard.dataset.name;
+  confirmDoneModal.show();
 }
 
 /**
  * Konfirmasi 'Selesai' (Fitur 1)
- * (Fungsi ini tidak berubah)
+ * (Tidak berubah)
  */
 function confirmCompleteTask() {
   if (!taskToCompleteId) return;
@@ -495,20 +492,16 @@ function getCountdownString(deadline) {
   const dl = new Date(deadline + "T23:59:59");
   const now = new Date();
   const totalSeconds = (dl - now) / 1000;
-
   if (totalSeconds <= 0) {
     return '<span class="countdown-time" style="color: red; font-weight: bold;">DEADLINE LEWAT!</span>';
   }
-
   const days = Math.floor(totalSeconds / 3600 / 24);
   const hours = Math.floor(totalSeconds / 3600) % 24;
   const minutes = Math.floor(totalSeconds / 60) % 60;
   const seconds = Math.floor(totalSeconds) % 60;
-
   let color = "green";
   if (days < 1) color = "red";
   else if (days <= urgentThresholdDays) color = "orange";
-
   return `<span class="countdown-time" style="color: ${color};">
         ${days} H, ${hours} J, ${minutes} M, ${seconds} D
     </span>`;
@@ -535,20 +528,48 @@ function startCountdownTimers() {
 }
 // --- (Selesai Fungsi Countdown) ---
 
+/**
+ * --- BARU: Fungsi untuk memulai mode Edit ---
+ */
+function initiateEdit(e) {
+  const taskCard = e.target.closest(".card");
+  if (!taskCard) return;
+
+  const taskId = taskCard.dataset.id;
+  const taskToEdit = tasks.find((task) => task.id === taskId);
+  if (!taskToEdit) return;
+
+  currentEditId = taskId; // Set ID global
+  modalTitle.textContent = "Edit Tugas"; // Ubah judul modal
+  taskNameInput.value = taskToEdit.name; // Isi form
+  taskDeadlineInput.value = taskToEdit.deadline; // Isi form
+
+  taskModal.show(); // Tampilkan modal
+}
+
 // --- Handler untuk Modal (Versi Bootstrap) ---
-// (Tidak ada perubahan)
 function showModal() {
+  // (Tidak berubah)
   errorMessage.style.display = "none";
   taskForm.reset();
   taskModal.show();
 }
+
+/**
+ * --- MODIFIKASI: resetModal ---
+ * Sekarang juga mereset ID edit dan judul modal
+ */
 function resetModal() {
   errorMessage.style.display = "none";
   taskForm.reset();
+  currentEditId = null; // Reset ID
+  if (modalTitle) {
+    modalTitle.textContent = "Tambah Tugas Baru"; // Reset Judul
+  }
 }
 
 // --- Fungsi update hitungan badge (Fitur 3) ---
-// (Fungsi ini tidak berubah)
+// (Tidak berubah)
 function updateTaskCountBadges() {
   document.getElementById("count-all").textContent = tasks.length;
   document.getElementById("count-api").textContent = tasks.filter(
@@ -568,45 +589,38 @@ function updateTaskCountBadges() {
 
 /**
  * Handler untuk Filter
- * (Fungsi ini tidak berubah)
+ * (Tidak berubah)
  */
 function handleFilterClick(e) {
   const clickedButton = e.target.closest(".filter-btn");
   if (!clickedButton) return;
-
   currentFilter = clickedButton.dataset.filter;
   localStorage.setItem("smartTasksFilter", currentFilter);
-
   document.querySelectorAll("#filter-container .filter-btn").forEach((btn) => {
     btn.classList.remove("active");
   });
   clickedButton.classList.add("active");
-
   if (currentFilter !== "done" && mainTitle) {
     mainTitle.textContent = clickedButton.textContent
       .trim()
       .replace(/\d+$/, "")
       .trim();
   }
-
   renderAllTasks();
 }
 
 /**
  * Handler untuk View Toggle (Fitur 1)
- * (Fungsi ini tidak berubah)
+ * (Tidak berubah)
  */
 function handleViewToggle(e) {
   const clickedButton = e.target.closest(".view");
   if (!clickedButton) return;
-
-  const view = clickedButton.dataset.view; // "card" or "list"
-
+  const view = clickedButton.dataset.view;
   document
     .querySelectorAll("#view-toggle .view")
     .forEach((btn) => btn.classList.remove("active"));
   clickedButton.classList.add("active");
-
   if (view === "list") {
     taskBoard.classList.add("list-view");
     taskBoard.style.display = "flex";
@@ -614,6 +628,75 @@ function handleViewToggle(e) {
     taskBoard.classList.remove("list-view");
     taskBoard.style.display = "grid";
   }
+}
+
+/**
+ * --- BARU: Handler untuk klik di task board ---
+ * (Memeriksa klik "Done" atau "Edit")
+ */
+function handleTaskBoardClick(e) {
+  if (e.target.closest(".btn-done-task")) {
+    initiateCompleteTask(e); // Panggil fungsi "Done"
+  }
+  if (e.target.closest(".btn-edit-task")) {
+    initiateEdit(e); // Panggil fungsi "Edit"
+  }
+}
+
+// --- (BARU) FITUR SAPAAN & WAKTU DINAMIS ---
+
+// 1. Fungsi Sapaan (Berjalan Sekali)
+function setDynamicGreeting() {
+  const greetingElement = document.getElementById("dynamic-greeting");
+  if (!greetingElement) return;
+
+  const now = new Date();
+  const currentHour = now.getHours();
+  let greeting = "Selamat Datang!";
+
+  if (currentHour >= 5 && currentHour < 11) {
+    greeting = "Selamat Pagi! ☀️";
+  } else if (currentHour >= 11 && currentHour < 15) {
+    greeting = "Selamat Siang. Tetap fokus!";
+  } else if (currentHour >= 15 && currentHour < 18) {
+    greeting = "Selamat Sore. Semangat! 🔥";
+  } else {
+    greeting = "Selamat Malam. Waktunya istirahat?";
+  }
+
+  greetingElement.textContent = greeting;
+}
+
+// 2. Fungsi Waktu (Berjalan Terus Menerus)
+function updateDynamicTime() {
+  const timeElement = document.getElementById("dynamic-time");
+  if (!timeElement) return;
+
+  const now = new Date();
+
+  // Format Tanggal (misal: Sabtu, 15 November 2025)
+  const dateOptions = {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  };
+  const formattedDate = now.toLocaleDateString("id-ID", dateOptions);
+
+  // Format Waktu (misal: 19:42:52)
+  const timeOptions = {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  };
+  // .replace agar formatnya 19:42:52 bukan 19.42.52
+  const formattedTime = now
+    .toLocaleTimeString("id-ID", timeOptions)
+    .replace(/\./g, ":");
+
+  // Gabungkan
+  timeElement.textContent = `${formattedDate} | ${formattedTime}`;
 }
 
 // --- Inisialisasi Aplikasi ---
@@ -645,9 +728,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // Render tugas awal
   renderAllTasks();
 
+  // Panggil sapaan & waktu
+  setDynamicGreeting();
+  updateDynamicTime();
+  setInterval(updateDynamicTime, 1000);
+
   // --- Tambahkan semua Event Listener ---
   taskForm.addEventListener("submit", handleAddTask);
-  taskBoard.addEventListener("click", initiateCompleteTask);
+
+  // MODIFIKASI: Listener Task Board
+  taskBoard.addEventListener("click", handleTaskBoardClick);
+
   btnConfirmDone.addEventListener("click", confirmCompleteTask);
 
   if (showModalButton) {
