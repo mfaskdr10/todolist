@@ -290,16 +290,16 @@ function renderDonePage() {
     let categoryName = task.quadrantKey;
     switch (task.quadrantKey) {
       case "api":
-        categoryName = "🔥 Penting";
+        categoryName = "Penting";
         break;
       case "cepat":
-        categoryName = "✅ Cicil Cepat";
+        categoryName = "Cicil Cepat";
         break;
       case "jadwal":
-        categoryName = "🗓️ Jadwalkan";
+        categoryName = "Jadwalkan";
         break;
       case "santai":
-        categoryName = "☕ Santai";
+        categoryName = "Santai";
         break;
     }
     item.innerHTML = `
