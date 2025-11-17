@@ -161,19 +161,19 @@ function renderTask(task) {
   switch (task.quadrantKey) {
     case "api":
       cardColorClass = "red";
-      categoryName = "🔥 Penting";
+      categoryName = "Penting";
       break;
     case "cepat":
       cardColorClass = "amber";
-      categoryName = "✅ Cicil Cepat";
+      categoryName = "Cicil Cepat";
       break;
     case "jadwal":
       cardColorClass = "blue";
-      categoryName = "🗓️ Jadwalkan";
+      categoryName = "Jadwalkan";
       break;
     case "santai":
       cardColorClass = "gray";
-      categoryName = "☕ Santai";
+      categoryName = "Santai";
       break;
     default:
       cardColorClass = "gray";
