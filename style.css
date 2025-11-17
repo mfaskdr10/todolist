@@ -626,3 +626,156 @@ a {
   font-size: 13px;
   color: #5e5e5e;
 }
+
+/* === MEDIA QUERIES UNTUK RESPONSIVITAS === */
+/* (Tambahkan ini di bagian paling bawah file CSS Anda) */
+
+/* Desktop Menengah (1200px)
+  (Ini sudah ada di kode Anda, disertakan untuk kelengkapan) 
+*/
+@media (max-width: 1200px) {
+  #task-board {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Tablet (Layar Sedang < 992px)
+  - Mengurangi padding agar tidak terlalu mepet
+*/
+@media (max-width: 992px) {
+  .sidebar {
+    padding: 30px 15px; /* Kurangi padding sidebar */
+  }
+
+  .sidebar .container-sidebar {
+    padding: 20px 15px;
+  }
+
+  .content {
+    padding: 60px 25px; /* Kurangi padding content */
+  }
+}
+
+/* Mobile (Layar Kecil < 768px)
+  - Menumpuk layout utama (sidebar di atas, content di bawah)
+  - Menumpuk header (tombol Add Task, Search, View)
+  - Mengubah grid menjadi 1 kolom
+  - Menyesuaikan ukuran font
+*/
+@media (max-width: 768px) {
+  /* --- Layout Utama --- */
+  .container-all {
+    flex-direction: column; /* STACKING UTAMA */
+  }
+
+  .sidebar {
+    min-height: auto; /* Hapus tinggi 100vh */
+    width: 100%; /* Lebar penuh */
+    padding: 20px; /* Kurangi padding */
+    border-radius: 0; /* Hapus radius di mobile */
+    box-shadow: none; /* Hapus bayangan di mobile */
+  }
+
+  .sidebar .container-sidebar {
+    padding: 20px;
+    height: auto;
+  }
+
+  .content {
+    padding: 30px 20px; /* Kurangi padding content */
+  }
+
+  /* --- Header Content --- */
+  .content .all-items .group {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .content .all-items .group .add-task {
+    max-width: 100%; /* Tombol add-task lebar penuh */
+    padding: 12px;
+    order: -1; /* Pindahkan tombol 'Add Task' ke paling atas */
+  }
+
+  .content .all-items .group .view-container {
+    justify-content: flex-start; /* Ratakan kiri */
+  }
+
+  /* --- Tipografi --- */
+  .title {
+    font-size: 1.8rem;
+  }
+  h1.title {
+    font-size: 1.8rem;
+  }
+  #view-done-page .title {
+    font-size: 1.8rem;
+  }
+  .modal .modal-content .modal-header .modal-title {
+    font-size: 1.25rem; /* Kecilkan judul modal */
+  }
+  .container-sidebar .menu .filter-btn {
+    font-size: 18px; /* Kecilkan menu filter */
+    padding: 12px 8px;
+  }
+  .content .all-items .group .input-wrap input {
+    font-size: 16px; /* Kecilkan input search */
+  }
+  .content .all-items .group .input-wrap input::placeholder {
+    font-size: 16px;
+  }
+
+  /* --- Task Board --- 
+    (Aturan grid-template-columns: 1fr; sudah ada di kode Anda)
+  */
+  #task-board {
+    grid-template-columns: 1fr;
+  }
+
+  /* --- Task Board (List View Mobile) --- */
+  #task-board.list-view .card {
+    flex-wrap: wrap; /* Izinkan item di list view untuk wrap */
+    gap: 5px 10px; /* row-gap, column-gap */
+  }
+  #task-board.list-view .card .title-card {
+    width: 100%; /* Judul ambil baris sendiri */
+    margin-right: 0;
+    order: 1; /* Dibawah kategori */
+    font-size: 16px;
+  }
+  #task-board.list-view .card .category {
+    order: 0; /* Paling atas */
+    margin-bottom: 5px;
+  }
+  #task-board.list-view .card .deadline {
+    order: 2;
+    margin-right: auto;
+  }
+  #task-board.list-view .card .countdown {
+    order: 3;
+    display: none; /* Terlalu ramai di list view mobile */
+  }
+  #task-board.list-view .card .btn-done-task {
+    order: 4;
+    width: 100%; /* Tombol done lebar penuh */
+    margin-top: 10px;
+  }
+
+  /* --- Halaman Statistik --- 
+    (Aturan grid-template-columns: 1fr; sudah ada di kode Anda)
+  */
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .stat-card h3 {
+    font-size: 2.5rem; /* Kecilkan angka stat */
+  }
+  .history-title {
+    font-size: 1.25rem;
+  }
+  .history-item-header {
+    flex-direction: column; /* Stack judul dan tanggal riwayat */
+    align-items: flex-start;
+    gap: 5px;
+  }
+}
